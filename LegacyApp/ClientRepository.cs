@@ -4,7 +4,7 @@ using System.Data.SqlClient;
 
 namespace LegacyApp
 {
-    public class ClientRepository
+    public class ClientRepository : IClientRepository
     {
         public Client GetById(int id)
         {
@@ -22,7 +22,7 @@ namespace LegacyApp
 
                 var parameter = new SqlParameter("@ClientId", SqlDbType.Int) { Value = id };
                 command.Parameters.Add(parameter);
-                
+
                 connection.Open();
                 var reader = command.ExecuteReader(CommandBehavior.CloseConnection);
                 while (reader.Read())
