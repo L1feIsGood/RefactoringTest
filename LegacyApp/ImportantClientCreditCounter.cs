@@ -3,12 +3,15 @@
     public class ImportantClientCreditCounter : IClientCreditCounter
     {
         private readonly UserCreditServiceClient _userCreditService;
+        public string ClientType { get; set; }
 
-        public ImportantClientCreditCounter(UserCreditServiceClient userCreditService)
+        public ImportantClientCreditCounter()
         {
-            _userCreditService = userCreditService;
+            _userCreditService = new UserCreditServiceClient();
+            ClientType = "ImportantClient";
         }
-        
+
+
         public CreditLimitModel GetCreditLimit(User user)
         {
             return new CreditLimitModel

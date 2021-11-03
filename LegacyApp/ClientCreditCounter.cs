@@ -2,13 +2,16 @@
 {
     public class ClientCreditCounter : IClientCreditCounter
     {
+        public string ClientType { get; set; }
         private readonly UserCreditServiceClient _userCreditService;
 
-        public ClientCreditCounter(UserCreditServiceClient userCreditService)
+        public ClientCreditCounter()
         {
-            _userCreditService = userCreditService;
+            _userCreditService = new UserCreditServiceClient();
+            ClientType = "";
         }
-        
+
+
         public CreditLimitModel GetCreditLimit(User user)
         {
             return new CreditLimitModel
