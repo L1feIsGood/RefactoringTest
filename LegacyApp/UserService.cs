@@ -5,29 +5,23 @@ namespace LegacyApp
     public class UserService
     {
         public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
-        {
-            if (string.IsNullOrEmpty(firName) || string.IsNullOrEmpty(surname))
-            {
-                return false;
-            }
+        {            
+            if (string.IsNullOrEmpty(firName) || string.IsNullOrEmpty(surname))            
+                return false;            
 
-            if (!email.Contains("@") && !email.Contains("."))
-            {
+            if (!System.Text.RegularExpressions.Regex.IsMatch(email, @"\A(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\Z", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
                 return false;
-            }
 
             var now = DateTime.Now;
             int age = now.Year - dateOfBirth.Year;
-            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
+            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day))
+                age--;
 
-            if (age < 21)
-            {
-                return false;
-            }
+            if (age < 21)            
+                return false;            
 
             var clientRepository = new ClientRepository();
             var client = clientRepository.GetById(clientId);
-
             var user = new User
             {
                 Client = client,
@@ -37,31 +31,24 @@ namespace LegacyApp
                 Surname = surname
             };
 
+            // Пропустить проверку лимита
             if (client.Name == "VeryImportantClient")
-            {
-                // Пропустить проверку лимита
                 user.HasCreditLimit = false;
-            }
-            else if (client.Name == "ImportantClient")
-            {
-                // Проверить лимит и удвоить его
+
+            // Проверить лимит и удвоить его
+            if (client.Name == "ImportantClient")
                 user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    creditLimit = creditLimit * 2;
-                    user.CreditLimit = creditLimit;
-                }
-            }
-            else
+
+            using (var userCreditService = new UserCreditServiceClient())
             {
-                // Проверить лимит
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
+                var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
+                if (!user.HasCreditLimit)
                 {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    user.CreditLimit = creditLimit;
+                    // Только если лимит > 0, иначе будет ошибка
+                    if (creditLimit > 0)
+                        creditLimit = creditLimit * 2;
                 }
+                user.CreditLimit = creditLimit;
             }
 
             if (user.HasCreditLimit && user.CreditLimit < 500)
