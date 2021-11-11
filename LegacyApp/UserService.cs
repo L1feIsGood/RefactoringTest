@@ -7,10 +7,11 @@ namespace LegacyApp
     {
         public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
         {
+            // для проверки емейла воспольуземся шаблоном из интернета
             string pattern = @"^(?("")(""[^""]+?""@)|(([0-9a-z]((\.(?!\.))|[-!#\$%&'\*\+/=\?\^`\{\}\|~\w])*)(?<=[0-9a-z])@))" +
                 @"(?(\[)(\[(\d{1,3}\.){3}\d{1,3}\])|(([0-9a-z][-\w]*[0-9a-z]*\.)+[a-z0-9]{2,17}))$";
-            var dateBirth = DateTime.Now.AddYears(-21);
-            int isImportant = 1; // 
+            var dateBirth = DateTime.Now.AddYears(-21); //  сразу посчитаем дату, после которой люди слишком молоды для регистраици в этом замечательном проекте
+            int isImportant = 1; // использем для отделения знати от работяг
             
             if (string.IsNullOrEmpty(firName) || 
                 string.IsNullOrEmpty(surname) ||
@@ -32,17 +33,16 @@ namespace LegacyApp
                 Surname = surname
             };
 
+            // для элиты пропустим проверку лимита
             if (client.Name == "VeryImportantClient")
             {
-                // Пропустить проверку лимита
                 user.HasCreditLimit = false;
             }
             else
             {
                 if (client.Name == "ImportantClient")
                     isImportant = 2;
-                
-                // Проверить лимит
+             
                 user.HasCreditLimit = true;
                 using (var userCreditService = new UserCreditServiceClient())
                 {
