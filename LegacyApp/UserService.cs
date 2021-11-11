@@ -15,7 +15,7 @@ namespace LegacyApp
             
             if (string.IsNullOrEmpty(firName) || 
                 string.IsNullOrEmpty(surname) ||
-                Regex.IsMatch(email, pattern, RegexOptions.IgnoreCase) ||
+                !Regex.IsMatch(email, pattern, RegexOptions.IgnoreCase) ||
                 dateOfBirth < dateBirth)
             {
                 return false;
