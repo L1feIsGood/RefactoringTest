@@ -4,74 +4,70 @@ namespace LegacyApp
 {
     public class UserService
     {
-        public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
+        private const int MinimalGrantAge = 21; // минимальный возраст заемщика
+        private const int BaseOfCreditLimit = 500; // ставка кредита, ниже которой отказывать в выдаче кредита 
+
+        private bool IsNameValid(string firName, string surname)
         {
             if (string.IsNullOrEmpty(firName) || string.IsNullOrEmpty(surname))
             {
                 return false;
             }
+            return true;
+        }
 
+        private bool IsEmailValid(string email)
+        {
             if (!email.Contains("@") && !email.Contains("."))
             {
                 return false;
             }
+            return true;
+        }
 
+        private bool IsEnoughAgeForCredit(DateTime dateOfBirth, int minimalGrantAge)
+        {
             var now = DateTime.Now;
             int age = now.Year - dateOfBirth.Year;
             if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
 
-            if (age < 21)
+            if (age < minimalGrantAge)
             {
                 return false;
             }
+            return true;
+        }
 
-            var clientRepository = new ClientRepository();
-            var client = clientRepository.GetById(clientId);
+        /*
+        * Класс имеет один единственный метод AddUser. Однако содержит в себе несколько обязанностей: валидация данных, получение статуса клиента, создание юзера, разбор типов клиента.
+        * Рефакторинг данного метода заключается в том, чтобы разгрузить метод AddUser. Поместить валидацию данных в отдельные методы. Создание Юзера и разбор типа клиента поместить в класс User. Возраст заемщика, ставку кредита вынести в константы. "Предположим, что в коде нет проблем с точки зрения бизнес логики...." - По ТЗ, логика и код рабочий. Поэтому не стал менять валидацию данных firName, email и т.д 
+        */
 
-            var user = new User
+        public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
+        {
+            if (IsNameValid(firName, surname) && IsEmailValid(email) && IsEnoughAgeForCredit(dateOfBirth, MinimalGrantAge))
             {
-                Client = client,
-                DateOfBirth = dateOfBirth,
-                EmailAddress = email,
-                FirstName = firName,
-                Surname = surname
-            };
+                var clientRepository = new ClientRepository();
+                var client = clientRepository.GetById(clientId);
 
-            if (client.Name == "VeryImportantClient")
-            {
-                // Пропустить проверку лимита
-                user.HasCreditLimit = false;
-            }
-            else if (client.Name == "ImportantClient")
-            {
-                // Проверить лимит и удвоить его
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
+                var user = new User();
+                user = user.CreateUser(client, dateOfBirth, email, firName, surname);
+
+                if (user.HasCreditLimit && user.CreditLimit < BaseOfCreditLimit)
                 {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    creditLimit = creditLimit * 2;
-                    user.CreditLimit = creditLimit;
+                    return false;
                 }
+
+                UserDataAccess.AddUser(user);
+
+                return true;
+
             }
             else
             {
-                // Проверить лимит
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    user.CreditLimit = creditLimit;
-                }
-            }
-
-            if (user.HasCreditLimit && user.CreditLimit < 500)
-            {
                 return false;
             }
 
-            UserDataAccess.AddUser(user);
-
-            return true;
         }
     }
 }
