@@ -14,6 +14,7 @@ namespace LegacyApp
         {
             _clientRepository = clientRepository;
             _creditLimitService = creditLimitService;
+            _userDataAccessService = userDataAccessService;
         }
 
         public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
