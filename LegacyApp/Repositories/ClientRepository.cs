@@ -4,7 +4,11 @@ using System.Data.SqlClient;
 
 namespace LegacyApp
 {
-    public class ClientRepository
+    public interface IClientRepository
+    {
+        Client GetById(int id);
+    }
+    public class ClientRepository : IClientRepository
     {
         public Client GetById(int id)
         {
