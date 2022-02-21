@@ -1,5 +1,6 @@
 ﻿using System;
 using LegacyApp.DTO;
+using LegacyApp.Services;
 
 namespace LegacyApp
 {
@@ -7,27 +8,30 @@ namespace LegacyApp
     {
         private readonly IClientRepository _clientRepository;
         private readonly ICreditLimitService _creditLimitService;
-        public UserService(IClientRepository clientRepository, ICreditLimitService creditLimitService)
+        private readonly IUserDataAccessService _userDataAccessService;
+        public UserService(IClientRepository clientRepository, ICreditLimitService creditLimitService,
+            IUserDataAccessService userDataAccessService)
         {
             _clientRepository = clientRepository;
             _creditLimitService = creditLimitService;
         }
 
-        public bool AddUser(AddUserDTO newUserDto)
+        public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
         {
-            if (!ValidateUser(newUserDto))
-                return false;
-
-            var client = _clientRepository.GetById(newUserDto.Client.Id);
-
             var newUser = new User
             {
-                Client = client,
-                DateOfBirth = newUserDto.DateOfBirth,
-                EmailAddress = newUserDto.EmailAddress,
-                FirstName = newUserDto.FirstName,
-                Surname = newUserDto.Surname
+                DateOfBirth = dateOfBirth,
+                EmailAddress = email,
+                FirstName = firName,
+                Surname = surname
             };
+
+            if (!ValidateUser(newUser))
+                return false;
+
+            var client = _clientRepository.GetById(clientId);
+
+            newUser.Client = client;
 
             newUser = _creditLimitService.SetCreditLimit(newUser);
 
@@ -36,23 +40,23 @@ namespace LegacyApp
                 return false;
             }
 
-            UserDataAccess.AddUser(newUser);
+            _userDataAccessService.AddUser(newUser);
 
             return true;
         }
 
-        bool ValidateUser(AddUserDTO newUser)
+        bool ValidateUser(User user)
         {
-            if (string.IsNullOrEmpty(newUser.FirstName) || string.IsNullOrEmpty(newUser.Surname))
+            if (string.IsNullOrEmpty(user.FirstName) || string.IsNullOrEmpty(user.Surname))
                 return false;
 
-            if (!newUser.EmailAddress.Contains("@") && !newUser.EmailAddress.Contains("."))
+            if (!user.EmailAddress.Contains("@") && !user.EmailAddress.Contains("."))
                 return false;
 
-            return ValidateUserAge(newUser);
+            return ValidateUserAge(user);
         }
 
-        private bool ValidateUserAge(AddUserDTO user)
+        private bool ValidateUserAge(User user)
         {
             var now = DateTime.Now;
             int age = now.Year - user.DateOfBirth.Year;
