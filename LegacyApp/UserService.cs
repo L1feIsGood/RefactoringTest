@@ -2,76 +2,73 @@
 
 namespace LegacyApp
 {
-    public class UserService
+    public class UserService : IUserService
     {
+        private readonly IUserCreditService _userCreditService;
+        private readonly IClientRepository _clientRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IUserValidator _userValidator;
+        private readonly ICreditLimitSetterFactory _creditLimitSetterFactory;
+
+        public UserService(IUserCreditService userCreditService,
+            IClientRepository clientRepository,
+            IUserRepository userRepository,
+            IUserValidator userValidator,
+            ICreditLimitSetterFactory creditLimitSetterFactory)
+        {
+            _userCreditService = userCreditService;
+            _clientRepository = clientRepository;
+            _userRepository = userRepository;
+            _userValidator = userValidator;
+            _creditLimitSetterFactory = creditLimitSetterFactory;
+        }
+
+        public UserService() : this(
+            new UserCreditServiceClient(),
+            new ClientRepository(),
+            new SqlUserRepository(),
+            new UserValidator(new DefaultDateTimeService()),
+            new CreditLimitSetterFactory())
+        {
+
+        }
+
         public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
         {
-            if (string.IsNullOrEmpty(firName) || string.IsNullOrEmpty(surname))
-            {
-                return false;
-            }
-
-            if (!email.Contains("@") && !email.Contains("."))
-            {
-                return false;
-            }
-
-            var now = DateTime.Now;
-            int age = now.Year - dateOfBirth.Year;
-            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
-
-            if (age < 21)
-            {
-                return false;
-            }
-
-            var clientRepository = new ClientRepository();
-            var client = clientRepository.GetById(clientId);
-
             var user = new User
             {
-                Client = client,
                 DateOfBirth = dateOfBirth,
                 EmailAddress = email,
                 FirstName = firName,
                 Surname = surname
             };
 
-            if (client.Name == "VeryImportantClient")
-            {
-                // Пропустить проверку лимита
-                user.HasCreditLimit = false;
-            }
-            else if (client.Name == "ImportantClient")
-            {
-                // Проверить лимит и удвоить его
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    creditLimit = creditLimit * 2;
-                    user.CreditLimit = creditLimit;
-                }
-            }
-            else
-            {
-                // Проверить лимит
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    user.CreditLimit = creditLimit;
-                }
-            }
+            // Проверить пользовательские данные на валидность.
+            if (_userValidator.IsValid(user) == false)
+                return false;
+
+            user.Client = _clientRepository.GetById(clientId);
+
+            // Установить кредитный лимит пользователю.
+            SetCreditLimit(user);
 
             if (user.HasCreditLimit && user.CreditLimit < 500)
             {
                 return false;
             }
 
-            UserDataAccess.AddUser(user);
+            _userRepository.AddUser(user);
 
             return true;
+        }
+
+        private void SetCreditLimit(User user)
+        {
+            // Изначально неясно, будет ли расширяться функционал для клиентов, но заранее лучше заготовить почву.
+            // Благодаря такой стратегии можно без проблем добавлять новую логику установки кредитных лимитов без редактирования UserService.
+            var creditSetter = _creditLimitSetterFactory.Create(user);
+
+            creditSetter.SetCreditLimit(user, _userCreditService);
         }
     }
 }
