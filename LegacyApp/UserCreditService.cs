@@ -2,26 +2,34 @@
 
 namespace LegacyApp
 {
-    public interface IUserCreditService
+    public interface IUserCreditService : IDisposable
     {
         int GetCreditLimit(string firstName, string surname, DateTime dateOfBirth);
     }
-    
-    public class UserCreditServiceClient : IUserCreditService, IDisposable
+
+    public class UserCreditServiceClientRegular : IUserCreditService
     {
-        public UserCreditServiceClient()
+        public UserCreditServiceClientRegular()
         {
-            
+
         }
-        
-        public int GetCreditLimit(string firstName, string surname, DateTime dateOfBirth)
+
+        public virtual int GetCreditLimit(string firstName, string surname, DateTime dateOfBirth)
         {
             return 0;
         }
 
         public void Dispose()
         {
-            
+
+        }
+    }
+
+    public class UserCreditServiceClientImportant : UserCreditServiceClientRegular
+    {
+        public override int GetCreditLimit(string firstName, string surname, DateTime dateOfBirth)
+        {
+            return base.GetCreditLimit(firstName, surname, dateOfBirth) * 2;
         }
     }
 }

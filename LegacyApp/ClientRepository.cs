@@ -8,35 +8,42 @@ namespace LegacyApp
     {
         public Client GetById(int id)
         {
-            Client client = null;
-            var connectionString = ConfigurationManager.ConnectionStrings["appDatabase"].ConnectionString;
-
-            using (var connection = new SqlConnection(connectionString))
+            try
             {
-                var command = new SqlCommand
-                {
-                    Connection = connection,
-                    CommandType = CommandType.StoredProcedure,
-                    CommandText = "uspGetClientById"
-                };
+                Client client = null;
+                var connectionString = ConfigurationManager.ConnectionStrings["appDatabase"].ConnectionString;
 
-                var parameter = new SqlParameter("@ClientId", SqlDbType.Int) { Value = id };
-                command.Parameters.Add(parameter);
-                
-                connection.Open();
-                var reader = command.ExecuteReader(CommandBehavior.CloseConnection);
-                while (reader.Read())
+                using (var connection = new SqlConnection(connectionString))
                 {
-                    client = new Client
+                    var command = new SqlCommand
                     {
-                        Id = int.Parse(reader["ClientId"].ToString()),
-                        Name = reader["Name"].ToString(),
-                        ClientStatus = (ClientStatus)int.Parse("ClientStatus")
+                        Connection = connection,
+                        CommandType = CommandType.StoredProcedure,
+                        CommandText = "uspGetClientById"
                     };
-                }
-            }
 
-            return client;
+                    var parameter = new SqlParameter("@ClientId", SqlDbType.Int) { Value = id };
+                    command.Parameters.Add(parameter);
+
+                    connection.Open();
+                    var reader = command.ExecuteReader(CommandBehavior.CloseConnection);
+                    while (reader.Read())
+                    {
+                        client = new Client
+                        {
+                            Id = id,
+                            Name = reader["Name"].ToString(),
+                            ClientStatus = (ClientStatus)int.Parse("ClientStatus")
+                        };
+                    }
+                }
+
+                return client;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
