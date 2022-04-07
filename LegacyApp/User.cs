@@ -10,6 +10,6 @@ namespace LegacyApp
         public string FirstName { get; set; }
         public string Surname { get; set; }
         public int CreditLimit { get; set; }
-        public bool HasCreditLimit { get; set; }
+        public bool HasCreditLimit { get; set; } = true;
     }
 }

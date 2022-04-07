@@ -4,28 +4,37 @@ namespace LegacyApp
 {
     public class UserService
     {
-        public bool AddUser(string firstName, string surname, string email, DateTime dateOfBirth, int clientId)
+        private readonly IPersonalDataValidationService mPersonalDataValidationService;
+        private readonly ICreditLimitsService mCreditLimitsService;
+
+
+        [Obsolete]
+        public UserService()
         {
-            if (!CheckName(firstName, surname) || !CheckEMail(email) || !CheckAge(dateOfBirth))
+            //That's not good,
+            //Need more DI for the DI god!1 
+            mPersonalDataValidationService = PersonalDataValidationServiceClient.Create();
+            mCreditLimitsService = CreditLimitsServiceClient.Create();
+        }
+
+        public UserService(IPersonalDataValidationService dataValidationService, ICreditLimitsService creditLimitsService)
+        {
+            mPersonalDataValidationService = dataValidationService;
+            mCreditLimitsService = creditLimitsService;
+        }
+
+
+        public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
+        {
+            var user = CreateUser(firName, surname, email, dateOfBirth, clientId);
+
+            if(!mPersonalDataValidationService.Validate(user))
             {
                 return false;
             }
 
-            var clientRepository = new ClientRepository();
-            var client = clientRepository.GetById(clientId);
-
-            var user = new User
-            {
-                Client = client,
-                DateOfBirth = dateOfBirth,
-                EmailAddress = email,
-                FirstName = firstName,
-                Surname = surname
-            };
-
-            SetCreditLimit(user);
-
-            if (!CheckCreditLimit(user))
+            if(!(mCreditLimitsService.SetCreditLimit(user)
+                                     .ValidateCreditLimit(user)))
             {
                 return false;
             }
@@ -36,76 +45,22 @@ namespace LegacyApp
         }
 
 
-        #region Private methods
-
-        private bool CheckCreditLimit(User user)
+        //TODO It could be cool to extract this to some user fabric, I guess
+        private User CreateUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
         {
-            if(user.HasCreditLimit && user.CreditLimit < 500)
-            {
-                return false;
-            }
+            var clientRepository = new ClientRepository();
+            var client = clientRepository.GetById(clientId);
 
-            return true;
+            var user = new User
+            {
+                Client = client,
+                DateOfBirth = dateOfBirth,
+                EmailAddress = email,
+                FirstName = firName,
+                Surname = surname
+            };
+
+            return user;
         }
-
-        private bool CheckName(string firstName, string surname)
-        {
-            if(string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(surname))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool CheckEMail(string email)
-        {
-            if(!email.Contains("@") && !email.Contains("."))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool CheckAge(DateTime dateOfBirth)
-        {
-            var now = DateTime.Now;
-            int age = now.Year - dateOfBirth.Year;
-            if(now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day))
-            {
-                age--;
-            }
-
-            if(age < 21)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private void SetCreditLimit(User user)
-        {
-            if(user.Client.Name == "VeryImportantClient")
-            {
-                user.HasCreditLimit = false;
-                return;
-            }
-
-            var creditMultiplier = 1;
-            if(user.Client.Name == "ImportantClient")
-            {
-                creditMultiplier = 2;
-            }
-
-            using(var userCreditService = new UserCreditServiceClient())
-            {
-                var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                user.CreditLimit = creditLimit * creditMultiplier;
-            }
-        }
-
-        #endregion
     }
 }
