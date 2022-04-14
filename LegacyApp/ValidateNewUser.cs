@@ -2,9 +2,14 @@
 
 namespace LegacyApp;
 
-public static class ValidateNewUser
+public interface IValidateNewUser
 {
-    public static bool Validate(
+    bool Validate(string firstName, string surname, string email, DateTime dateOfBirth);
+}
+
+public class ValidateNewUser : IValidateNewUser
+{
+    public bool Validate(
             string firstName,
             string surname,
             string email,
@@ -20,13 +25,13 @@ public static class ValidateNewUser
         return true;
     }
 
-    private static bool CheckingUserName(string firstName, string surname)
+    private bool CheckingUserName(string firstName, string surname)
         => !(string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(surname));
 
-    private static bool CheckingEmail(string email)
+    private bool CheckingEmail(string email)
         => email.Contains("@") && email.Contains(".");
 
-    private static int GetAge(DateTime dateOfBirth)
+    private int GetAge(DateTime dateOfBirth)
     {
         var now = DateTime.Now;
         int age = now.Year - dateOfBirth.Year;
