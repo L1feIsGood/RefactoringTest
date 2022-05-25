@@ -1,26 +1,29 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 
 namespace LegacyApp
 {
     public class UserService
     {
-        public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
+        public int ageMin = 21;
+        public int сreditLimitMin = 500;
+        public bool AddUser(string firstName, string surname, string email, DateTime dateOfBirth, int clientId)
         {
-            if (string.IsNullOrEmpty(firName) || string.IsNullOrEmpty(surname))
+            var isNameValid = !string.IsNullOrEmpty(firstName) || !string.IsNullOrEmpty(surname);
+            if (!isNameValid)
             {
                 return false;
             }
 
-            if (!email.Contains("@") && !email.Contains("."))
+            Regex regex = new Regex(@"^\S*\@\S*\.\w*$");
+            var isEmailValid = regex.Match(email).Success;
+            if (!isEmailValid)  
             {
                 return false;
             }
 
-            var now = DateTime.Now;
-            int age = now.Year - dateOfBirth.Year;
-            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
-
-            if (age < 21)
+            var isAgeValid = !(Math.Floor((DateTime.Now - dateOfBirth).TotalDays / 365) < ageMin);
+            if (!isAgeValid)
             {
                 return false;
             }
@@ -33,38 +36,33 @@ namespace LegacyApp
                 Client = client,
                 DateOfBirth = dateOfBirth,
                 EmailAddress = email,
-                FirstName = firName,
+                FirstName = firstName,
                 Surname = surname
             };
 
-            if (client.Name == "VeryImportantClient")
+            switch (client.Name)
             {
-                // Пропустить проверку лимита
-                user.HasCreditLimit = false;
-            }
-            else if (client.Name == "ImportantClient")
-            {
-                // Проверить лимит и удвоить его
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
+                case "VeryImportantClient":
+                    // Пропустить проверку лимита
+                    user.HasCreditLimit = false;
+                    break;
+                case "ImportantClient":
+                    // Проверить лимит и удвоить его
+                    var userCreditService = new UserCreditServiceClient();
                     var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
                     creditLimit = creditLimit * 2;
+                    break;
+                default:
+                    // Проверить лимит
+                    userCreditService = new UserCreditServiceClient();
+                    creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
                     user.CreditLimit = creditLimit;
-                }
-            }
-            else
-            {
-                // Проверить лимит
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    user.CreditLimit = creditLimit;
-                }
+                    user.HasCreditLimit = true;
+                    break;
             }
 
-            if (user.HasCreditLimit && user.CreditLimit < 500)
+            var isCreditLimitValid = user.HasCreditLimit && user.CreditLimit < сreditLimitMin;
+            if (!isCreditLimitValid)
             {
                 return false;
             }
