@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 
 namespace LegacyApp
 {
@@ -11,16 +12,14 @@ namespace LegacyApp
                 return false;
             }
 
-            if (!email.Contains("@") && !email.Contains("."))
+            Regex regex = new Regex(@"^\S*\@\S*\.\w*$"); // регулярное выражение  {текст}@{текст}.{текст}
+
+            if (regex.Match(email).Success) // проверка не допускающая @. без иных символов
             {
                 return false;
             }
 
-            var now = DateTime.Now;
-            int age = now.Year - dateOfBirth.Year;
-            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
-
-            if (age < 21)
+            if (Math.Floor((DateTime.Now - dateOfBirth).TotalDays / 365) < 21) // проверка года рождения без доп переменных
             {
                 return false;
             }
@@ -37,7 +36,7 @@ namespace LegacyApp
                 Surname = surname
             };
 
-            if (client.Name == "VeryImportantClient")
+            if (client.Name == "VeryImportantClient") 
             {
                 // Пропустить проверку лимита
                 user.HasCreditLimit = false;
