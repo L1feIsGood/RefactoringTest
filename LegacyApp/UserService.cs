@@ -6,11 +6,11 @@ namespace LegacyApp
     {
         public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
         {
-            var now = DateTime.Now;
-            int age = now.Year - dateOfBirth.Year;
-            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
+            var now_time = DateTime.Now;
+            int age_user = now_time.Year - dateOfBirth.Year;
+            if (now_time.Month < dateOfBirth.Month || (now_time.Month == dateOfBirth.Month && now_time.Day < dateOfBirth.Day)) age_user--;
 
-            if (string.IsNullOrEmpty(firName) || string.IsNullOrEmpty(surname) || age < 21 || !email.Contains("@") && !email.Contains("."))
+            if (string.IsNullOrEmpty(firName) || string.IsNullOrEmpty(surname) || age_user < 21 || !email.Contains("@") && !email.Contains("."))
             {
                 return false;
             }
