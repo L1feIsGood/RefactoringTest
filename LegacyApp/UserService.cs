@@ -17,7 +17,7 @@ namespace LegacyApp
 
             var clientRepository = new ClientRepository();
             var client = clientRepository.GetById(clientId);
-
+            
             var user = new User
             {
                 Client = client,
@@ -54,7 +54,7 @@ namespace LegacyApp
                         var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
                         user.CreditLimit = creditLimit;
                     }
-                }
+                }break;
             }
 
             if (user.HasCreditLimit && user.CreditLimit < 500)
