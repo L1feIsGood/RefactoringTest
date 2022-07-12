@@ -16,17 +16,14 @@ namespace LegacyApp
                 return false;
             }
 
-            var now = DateTime.Now;
-            int age = now.Year - dateOfBirth.Year;
-            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
+            int age = DateTime.Now.Subtract(dateOfBirth).Days / 365;
 
             if (age < 21)
             {
                 return false;
             }
 
-            var clientRepository = new ClientRepository();
-            var client = clientRepository.GetById(clientId);
+            var client = ClientRepository.GetClientById(clientId);
 
             var user = new User
             {
@@ -37,31 +34,23 @@ namespace LegacyApp
                 Surname = surname
             };
 
-            if (client.Name == "VeryImportantClient")
+            var userCreditService = new UserCreditServiceClient();
+
+            user.HasCreditLimit = true;
+            switch (client.Name)
             {
-                // Пропустить проверку лимита
-                user.HasCreditLimit = false;
-            }
-            else if (client.Name == "ImportantClient")
-            {
-                // Проверить лимит и удвоить его
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    creditLimit = creditLimit * 2;
-                    user.CreditLimit = creditLimit;
-                }
-            }
-            else
-            {
-                // Проверить лимит
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    user.CreditLimit = creditLimit;
-                }
+                case "VeryImportantClient":
+                    // Пропустить проверку лимита
+                    user.HasCreditLimit = false;
+                    break;
+                case "ImportantClient":
+                    // Проверить лимит и удвоить его 
+                    user.CreditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth) * 2;
+                    break;
+                default:
+                    // Проверить лимит
+                    user.CreditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
+                    break;
             }
 
             if (user.HasCreditLimit && user.CreditLimit < 500)
@@ -70,6 +59,8 @@ namespace LegacyApp
             }
 
             UserDataAccess.AddUser(user);
+
+            userCreditService.Dispose();
 
             return true;
         }
