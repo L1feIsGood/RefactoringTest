@@ -6,7 +6,7 @@ namespace LegacyApp
 {
     public class ClientRepository
     {
-        public Client GetById(int id)
+        public static Client GetClientById(int id)
         {
             Client client = null;
             var connectionString = ConfigurationManager.ConnectionStrings["appDatabase"].ConnectionString;
@@ -22,7 +22,7 @@ namespace LegacyApp
 
                 var parameter = new SqlParameter("@ClientId", SqlDbType.Int) { Value = id };
                 command.Parameters.Add(parameter);
-                
+
                 connection.Open();
                 var reader = command.ExecuteReader(CommandBehavior.CloseConnection);
                 while (reader.Read())
