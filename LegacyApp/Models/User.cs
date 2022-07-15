@@ -2,7 +2,7 @@
 
 namespace LegacyApp
 {
-    public class User
+    public class User : IUser
     {
         public Client Client { get; set; }
         public DateTime DateOfBirth { get; set; }
