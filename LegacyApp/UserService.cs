@@ -4,73 +4,68 @@ namespace LegacyApp
 {
     public class UserService
     {
-        public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
+        bool Validate(string firstName, string surname, string userEmail, int clientAge, User user)
         {
-            if (string.IsNullOrEmpty(firName) || string.IsNullOrEmpty(surname))
+            if (
+                (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(surname)) || // Проверка фио
+                !(userEmail.Contains("@") || userEmail.Contains(".")) || // Проверка на присутствие '@' и '.'
+                clientAge<21 || // Проверка на возраст
+                user.HasCreditLimit && user.CreditLimit < 500 // Проверка на малый кредитный лимит
+            )
             {
                 return false;
             }
-
-            if (!email.Contains("@") && !email.Contains("."))
-            {
-                return false;
-            }
-
-            var now = DateTime.Now;
-            int age = now.Year - dateOfBirth.Year;
-            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
-
-            if (age < 21)
-            {
-                return false;
-            }
-
+            return true;
+        }
+        
+        public bool AddUser(string firstName, string surname, string userEmail, DateTime dateOfBirth, int clientId)
+        {
+            #region подготовка данных для валидации
+            var today = DateTime.Now;
+            int clientAge = today.Year - dateOfBirth.Year;
+            if (today < dateOfBirth) clientAge--;
+            
             var clientRepository = new ClientRepository();
-            var client = clientRepository.GetById(clientId);
+            var client = clientRepository.GetClientById(clientId);
 
-            var user = new User
+            var userToAdd = new User
             {
-                Client = client,
+                UserClient = client,
                 DateOfBirth = dateOfBirth,
-                EmailAddress = email,
-                FirstName = firName,
+                EmailAddress = userEmail,
+                FirstName = firstName,
                 Surname = surname
             };
-
+            #endregion
+            
+            // Валидация
+            if (!Validate(firstName, surname, userEmail, clientAge, userToAdd)){return false;}
+            #region проверить, насколько важен клиент
             if (client.Name == "VeryImportantClient")
             {
-                // Пропустить проверку лимита
-                user.HasCreditLimit = false;
+                userToAdd.HasCreditLimit = false;
             }
+            
             else if (client.Name == "ImportantClient")
             {
-                // Проверить лимит и удвоить его
-                user.HasCreditLimit = true;
+                userToAdd.HasCreditLimit = true;
                 using (var userCreditService = new UserCreditServiceClient())
                 {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    creditLimit = creditLimit * 2;
-                    user.CreditLimit = creditLimit;
+                    userToAdd.CreditLimit = 2*userCreditService.GetCreditLimit(userToAdd.FirstName, userToAdd.Surname, userToAdd.DateOfBirth);
                 }
             }
+            
             else
             {
-                // Проверить лимит
-                user.HasCreditLimit = true;
+                userToAdd.HasCreditLimit = true;
                 using (var userCreditService = new UserCreditServiceClient())
                 {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    user.CreditLimit = creditLimit;
+                    userToAdd.CreditLimit = userCreditService.GetCreditLimit(userToAdd.FirstName, userToAdd.Surname, userToAdd.DateOfBirth);
                 }
             }
+            #endregion
 
-            if (user.HasCreditLimit && user.CreditLimit < 500)
-            {
-                return false;
-            }
-
-            UserDataAccess.AddUser(user);
-
+            UserDataAccess.AddUser(userToAdd);
             return true;
         }
     }

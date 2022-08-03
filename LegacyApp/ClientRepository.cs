@@ -6,7 +6,7 @@ namespace LegacyApp
 {
     public class ClientRepository
     {
-        public Client GetById(int id)
+        public Client GetClientById(int id)
         {
             Client client = null;
             var connectionString = ConfigurationManager.ConnectionStrings["appDatabase"].ConnectionString;

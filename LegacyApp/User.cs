@@ -4,7 +4,7 @@ namespace LegacyApp
 {
     public class User
     {
-        public Client Client { get; set; }
+        public Client UserClient { get; set; }
         public DateTime DateOfBirth { get; set; }
         public string EmailAddress { get; set; }
         public string FirstName { get; set; }
