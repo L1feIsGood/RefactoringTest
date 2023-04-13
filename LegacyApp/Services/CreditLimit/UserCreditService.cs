@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LegacyApp
+namespace LegacyApp.Services.CreditLimit
 {
     public interface IUserCreditService
     {

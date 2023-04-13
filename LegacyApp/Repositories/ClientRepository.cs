@@ -1,10 +1,11 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using LegacyApp.Models;
 
-namespace LegacyApp
+namespace LegacyApp.Repositories
 {
-    public class ClientRepository
+    internal class ClientRepository : IClientRepository
     {
         public Client GetById(int id)
         {
