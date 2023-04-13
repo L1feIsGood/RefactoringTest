@@ -17,11 +17,11 @@ namespace LegacyApp
             _creditLimiterFactory = new CreditLimiterFactory();
         }
 
-        public bool AddUser(string firstName, string surname, string email, DateTime dateOfBirth, int clientId)
+        public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
         {
             var userCreationParams = new UserCreationParams
             {
-                FirstName = firstName,
+                FirstName = firName,
                 Surname = surname,
                 Email = email,
                 DateOfBirth = dateOfBirth,
