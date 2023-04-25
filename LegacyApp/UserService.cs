@@ -2,76 +2,128 @@
 
 namespace LegacyApp
 {
+    /*
+    Не успел реализовать все идеи, которые есть.
+    Если бы я продолжил рефакторить, я бы применил тут Dependency Injection 
+    и избавился бы от зависимостей на реализации (User, Client, ClientRepository и пр.)
+     */
+
     public class UserService
     {
-        public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
+        public bool AddUser(string firstName, string lastName, string email, DateTime birthDate, int clientId)
         {
-            if (string.IsNullOrEmpty(firName) || string.IsNullOrEmpty(surname))
-            {
-                return false;
-            }
+            if (IsInvalidInput(firstName, lastName, email, birthDate)) return false;
 
-            if (!email.Contains("@") && !email.Contains("."))
-            {
-                return false;
-            }
+            var client = GetClientById(clientId);
+            var user = new User(client, birthDate, email, firstName, lastName);
 
-            var now = DateTime.Now;
-            int age = now.Year - dateOfBirth.Year;
-            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
-
-            if (age < 21)
+            if (user.HasCreditLimit)
             {
-                return false;
-            }
+                var creditLimit = GetUserCreditLimit(user);
 
-            var clientRepository = new ClientRepository();
-            var client = clientRepository.GetById(clientId);
-
-            var user = new User
-            {
-                Client = client,
-                DateOfBirth = dateOfBirth,
-                EmailAddress = email,
-                FirstName = firName,
-                Surname = surname
-            };
-
-            if (client.Name == "VeryImportantClient")
-            {
-                // Пропустить проверку лимита
-                user.HasCreditLimit = false;
-            }
-            else if (client.Name == "ImportantClient")
-            {
-                // Проверить лимит и удвоить его
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
+                if (client.Name == "ImportantClient")
                 {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    creditLimit = creditLimit * 2;
-                    user.CreditLimit = creditLimit;
+                    creditLimit *= 2;
                 }
-            }
-            else
-            {
-                // Проверить лимит
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    user.CreditLimit = creditLimit;
-                }
-            }
 
-            if (user.HasCreditLimit && user.CreditLimit < 500)
-            {
-                return false;
+                user.CreditLimit = creditLimit;
+
+                if (creditLimit < 500)
+                {
+                    return false;
+                }
             }
 
             UserDataAccess.AddUser(user);
 
             return true;
+        }
+
+        private Client GetClientById(int clientId)
+        {
+            var clientRepository = new ClientRepository();
+            var client = clientRepository.GetById(clientId);
+            return client;
+        }
+
+        private int GetUserCreditLimit(User user)
+        {
+            using (var userCreditService = new UserCreditServiceClient())
+            {
+                var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.LastName, user.BirthDate);
+                return creditLimit;
+            }
+        }
+
+        private bool IsInvalidInput(string firstName, string lastName, string email, DateTime birthDate)
+        {
+            if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
+            {
+                return true;
+            }
+
+            if (IsInvalidEmail(email))
+            {
+                return true;
+            }
+
+            if (IsInvalidAge(birthDate))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool IsInvalidEmail(string email)
+        {
+            if (string.IsNullOrEmpty(email) ||
+                !email.Contains("@") ||
+                !email.Contains("."))
+            {
+                return true;
+            }
+
+            return false;
+        }
+        private bool IsInvalidAge(DateTime birthDate)
+        {
+            var clientAge = GetAge(birthDate);
+
+            if (clientAge < 21)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+
+        private int GetAge(DateTime birthDate)
+        {
+            var currentTime = DateTime.Now;
+            var age = CalculateAge(birthDate, currentTime);
+
+            return age;
+        }
+
+        private int CalculateAge(DateTime birthDate, DateTime currentDate)
+        {
+            var age = birthDate.Year - currentDate.Year;
+
+            if (IsFutureBirthDate(birthDate, currentDate))
+            {
+                age--;
+            }
+
+            return age;
+        }
+
+        private bool IsFutureBirthDate(DateTime birthDate, DateTime currentDate)
+        {
+            return currentDate.Month < birthDate.Month ||
+                   (currentDate.Month == birthDate.Month &&
+                    currentDate.Day < birthDate.Day);
         }
     }
 }

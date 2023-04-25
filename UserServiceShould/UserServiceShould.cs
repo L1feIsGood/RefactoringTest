@@ -4,6 +4,12 @@ using NUnit.Framework;
 
 namespace UserServiceShould
 {
+    /*
+     В этом классе представлены базовые тесты на корректный ввод.
+     В идеале нужно мокнуть ClientRepository и протестировать
+     поведение метода AddUser() при работе с разными клиентами.
+    */
+
     [TestFixture]
     public class UserServiceShould
     {

@@ -22,9 +22,9 @@ namespace LegacyApp
 
                 var firstNameParameter = new SqlParameter("@Firstname", SqlDbType.VarChar, 50) {Value = user.FirstName};
                 command.Parameters.Add(firstNameParameter);
-                var surnameameParameter = new SqlParameter("@Surname", SqlDbType.VarChar, 50) {Value = user.Surname};
+                var surnameameParameter = new SqlParameter("@Surname", SqlDbType.VarChar, 50) {Value = user.LastName};
                 command.Parameters.Add(surnameameParameter);
-                var dateOfBirthParameter = new SqlParameter("@DateOfBirth", SqlDbType.DateTime) {Value = user.DateOfBirth};
+                var dateOfBirthParameter = new SqlParameter("@DateOfBirth", SqlDbType.DateTime) {Value = user.BirthDate};
                 command.Parameters.Add(dateOfBirthParameter);
                 var emailAddressParameter = new SqlParameter("@EmailAddress", SqlDbType.VarChar, 50) {Value = user.EmailAddress};
                 command.Parameters.Add(emailAddressParameter);
