@@ -1,4 +1,9 @@
-﻿using System;
+﻿using LegacyApp.Enums;
+using LegacyApp.Models;
+using LegacyApp.Repository;
+using LegacyApp.Services;
+using LegacyApp.Services.Validators;
+using System;
 
 namespace LegacyApp
 {
@@ -6,65 +11,26 @@ namespace LegacyApp
     {
         public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
         {
-            if (string.IsNullOrEmpty(firName) || string.IsNullOrEmpty(surname))
+            UserInfoValidator userValidator = new UserInfoValidator();
+            bool isUserValid = userValidator.Validate(firName, surname, email, dateOfBirth);
+            if (!isUserValid)
             {
                 return false;
             }
 
-            if (!email.Contains("@") && !email.Contains("."))
+            ClientRepository clientRepository = new ClientRepository();
+            Client client = clientRepository.GetById(clientId);
+            if (client == null)
             {
                 return false;
             }
 
-            var now = DateTime.Now;
-            int age = now.Year - dateOfBirth.Year;
-            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
+            UserCreator userCreator = new UserCreator();
+            User user = userCreator.Create(client, firName, surname, email, dateOfBirth);
 
-            if (age < 21)
-            {
-                return false;
-            }
-
-            var clientRepository = new ClientRepository();
-            var client = clientRepository.GetById(clientId);
-
-            var user = new User
-            {
-                Client = client,
-                DateOfBirth = dateOfBirth,
-                EmailAddress = email,
-                FirstName = firName,
-                Surname = surname
-            };
-
-            if (client.Name == "VeryImportantClient")
-            {
-                // Пропустить проверку лимита
-                user.HasCreditLimit = false;
-            }
-            else if (client.Name == "ImportantClient")
-            {
-                // Проверить лимит и удвоить его
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    creditLimit = creditLimit * 2;
-                    user.CreditLimit = creditLimit;
-                }
-            }
-            else
-            {
-                // Проверить лимит
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    user.CreditLimit = creditLimit;
-                }
-            }
-
-            if (user.HasCreditLimit && user.CreditLimit < 500)
+            UserCreditLimitValidator userCreditLimitValidator = new UserCreditLimitValidator();
+            bool isUserCreditLimitValid = userCreditLimitValidator.Validate(user.HasCreditLimit, user.CreditLimit);
+            if (!isUserCreditLimitValid)
             {
                 return false;
             }
