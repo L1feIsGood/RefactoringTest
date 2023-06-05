@@ -43,18 +43,9 @@ namespace LegacyApp.Services.Validators
 
         private bool ValidateEmail(string email)
         {
-            HashSet<char> delimeters = new HashSet<char>()
+            if (!email.Contains("@") && !email.Contains("."))
             {
-                '@',
-                '.'
-            };
-
-            for (int i = 0; i < email.Length; i++)
-            {
-                if (delimeters.Contains(email[i]))
-                {
-                    return false;
-                }
+                return false;
             }
 
             return true;
