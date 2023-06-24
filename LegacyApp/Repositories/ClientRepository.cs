@@ -4,7 +4,7 @@ using System.Data.SqlClient;
 
 namespace LegacyApp
 {
-    public class ClientRepository
+    public class ClientRepository : IClientRepository
     {
         public Client GetById(int id)
         {
@@ -30,7 +30,7 @@ namespace LegacyApp
                     client = new Client
                     {
                         Id = int.Parse(reader["ClientId"].ToString()),
-                        Name = reader["Name"].ToString(),
+                        Type = (ClientType)int.Parse(reader["Type"].ToString()),
                         ClientStatus = (ClientStatus)int.Parse("ClientStatus")
                     };
                 }
