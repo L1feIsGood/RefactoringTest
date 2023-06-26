@@ -4,21 +4,28 @@ namespace LegacyApp
 {
     public class UserService
     {
-        public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
+        public bool AddUser(string firstName, string surName, string email, DateTime birthday, int clientId)
         {
-            if (string.IsNullOrEmpty(firName) || string.IsNullOrEmpty(surname))
+            if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(surName))
             {
                 return false;
             }
 
+            /*
+             * Нужно "или", т.к. в email должна быть и '@', и точка. Не меняю, т.к. бизнес логику не трогаем, 
+             * но это вопрос к коллегам (а вдруг так было и нужно а это я тут что-то не пониманию)
+             */
             if (!email.Contains("@") && !email.Contains("."))
             {
                 return false;
             }
 
-            var now = DateTime.Now;
-            int age = now.Year - dateOfBirth.Year;
-            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
+            var currentDate = DateTime.Now;
+            int age = currentDate.Year - birthday.Year;
+
+            if (currentDate.Month < birthday.Month ||
+                (currentDate.Month == birthday.Month && currentDate.Day < birthday.Day))
+                age--;
 
             if (age < 21)
             {
@@ -31,10 +38,10 @@ namespace LegacyApp
             var user = new User
             {
                 Client = client,
-                DateOfBirth = dateOfBirth,
+                DateOfBirth = birthday,
                 EmailAddress = email,
-                FirstName = firName,
-                Surname = surname
+                FirstName = firstName,
+                Surname = surName
             };
 
             if (client.Name == "VeryImportantClient")
@@ -42,24 +49,17 @@ namespace LegacyApp
                 // Пропустить проверку лимита
                 user.HasCreditLimit = false;
             }
-            else if (client.Name == "ImportantClient")
-            {
-                // Проверить лимит и удвоить его
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    creditLimit = creditLimit * 2;
-                    user.CreditLimit = creditLimit;
-                }
-            }
             else
             {
-                // Проверить лимит
-                user.HasCreditLimit = true;
                 using (var userCreditService = new UserCreditServiceClient())
                 {
+                    user.HasCreditLimit = true;
                     var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
+
+                    if (client.Name == "ImportantClient")
+                    {
+                        creditLimit = creditLimit * 2;
+                    }
                     user.CreditLimit = creditLimit;
                 }
             }
