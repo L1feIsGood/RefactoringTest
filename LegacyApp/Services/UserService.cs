@@ -1,12 +1,14 @@
-﻿using System;
+﻿using LegacyApp.Enums;
+using LegacyApp.Models;
+using System;
 
 namespace LegacyApp
 {
     public class UserService
     {
-        public bool AddUser(string firName, string surname, string email, DateTime dateOfBirth, int clientId)
+        public bool AddUser(string firstName, string surName, string email, DateTime dateOfBirth, int clientId)
         {
-            if (string.IsNullOrEmpty(firName) || string.IsNullOrEmpty(surname))
+            if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(surName))
             {
                 return false;
             }
@@ -33,18 +35,18 @@ namespace LegacyApp
                 Client = client,
                 DateOfBirth = dateOfBirth,
                 EmailAddress = email,
-                FirstName = firName,
-                Surname = surname
+                FirstName = firstName,
+                Surname = surName
             };
 
 
-            user.HasCreditLimit = client.Name != "VeryImportantClient";
+            user.HasCreditLimit = client.ClientType != ClientType.VeryImportantClient;
             if (user.HasCreditLimit)
             {
                 using (var userCreditService = new UserCreditServiceClient())
                 {
                     var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    if (client.Name == "ImportantClient")
+                    if (client.ClientType == ClientType.ImportantClient)
                     {
                         user.CreditLimit = creditLimit * 2;
                     }
