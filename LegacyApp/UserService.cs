@@ -18,7 +18,7 @@ namespace LegacyApp
 
             var now = DateTime.Now;
             int age = now.Year - dateOfBirth.Year;
-            if (now.Month < dateOfBirth.Month || (now.Month == dateOfBirth.Month && now.Day < dateOfBirth.Day)) age--;
+            if (dateOfBirth > now.AddYears(-age)) age--;
 
             if (age < 21)
             {
@@ -37,30 +37,21 @@ namespace LegacyApp
                 Surname = surname
             };
 
-            if (client.Name == "VeryImportantClient")
+
+            user.HasCreditLimit = client.Name != "VeryImportantClient";
+            if (user.HasCreditLimit)
             {
-                // Пропустить проверку лимита
-                user.HasCreditLimit = false;
-            }
-            else if (client.Name == "ImportantClient")
-            {
-                // Проверить лимит и удвоить его
-                user.HasCreditLimit = true;
                 using (var userCreditService = new UserCreditServiceClient())
                 {
                     var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    creditLimit = creditLimit * 2;
-                    user.CreditLimit = creditLimit;
-                }
-            }
-            else
-            {
-                // Проверить лимит
-                user.HasCreditLimit = true;
-                using (var userCreditService = new UserCreditServiceClient())
-                {
-                    var creditLimit = userCreditService.GetCreditLimit(user.FirstName, user.Surname, user.DateOfBirth);
-                    user.CreditLimit = creditLimit;
+                    if (client.Name == "ImportantClient")
+                    {
+                        user.CreditLimit = creditLimit * 2;
+                    }
+                    else
+                    {
+                        user.CreditLimit = creditLimit;
+                    }
                 }
             }
 
