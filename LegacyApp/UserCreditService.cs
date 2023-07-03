@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace LegacyApp
 {
@@ -21,7 +22,7 @@ namespace LegacyApp
 
         public void Dispose()
         {
-            
+            Debug.WriteLine("Произошла очистка ресурсов класса UserCreditServiceClient");
         }
     }
 }
