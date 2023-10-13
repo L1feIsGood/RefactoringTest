@@ -2,9 +2,9 @@
 
 namespace LegacyApp
 {
-    public class UserValidator
+    public class UserValidator : IUserValidator
     {
-        public bool Validate(string firstName, string surname, string email, DateTime dateOfBirth)
+        public bool IsValid(string firstName, string surname, string email, DateTime dateOfBirth)
         {
             if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(surname))
             {

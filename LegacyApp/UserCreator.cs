@@ -2,7 +2,7 @@
 
 namespace LegacyApp
 {
-    public class UserCreator
+    public class UserCreator : IUserCreator
     {
         private const string veryImportantClientName = "VeryImportantClient";
         private const string importantClient = "ImportantClient";
