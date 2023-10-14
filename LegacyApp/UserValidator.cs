@@ -4,6 +4,8 @@ namespace LegacyApp
 {
     public class UserValidator : IUserValidator
     {
+        private const int minimumAge = 21;
+
         public bool IsValid(string firstName, string surname, string email, DateTime dateOfBirth)
         {
             if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(surname))
@@ -16,14 +18,14 @@ namespace LegacyApp
                 return false;
             }
 
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
             int age = now.Year - dateOfBirth.Year;
             if (now.DayOfYear < dateOfBirth.DayOfYear)
             {
                 age--;
             }
 
-            if (age < 21)
+            if (age < minimumAge)
             {
                 return false;
             }

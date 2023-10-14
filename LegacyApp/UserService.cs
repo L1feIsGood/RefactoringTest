@@ -24,6 +24,7 @@ namespace LegacyApp
             var client = clientRepository.GetById(clientId);
 
             var user = userCreator.CreateUserFromClient(client, firstName, surname, email, dateOfBirth);
+
             if (user.HasCreditLimit && user.CreditLimit < 500)
             {
                 return false;
