@@ -1,12 +1,13 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using LegacyApp.Models;
 
-namespace LegacyApp
+namespace LegacyApp.Repository
 {
-    public class ClientRepository
+    public class ClientRepository : IClientRepository
     {
-        public Client GetById(int id)
+        public Client GetClientById(int id)
         {
             Client client = null;
             var connectionString = ConfigurationManager.ConnectionStrings["appDatabase"].ConnectionString;
@@ -22,7 +23,7 @@ namespace LegacyApp
 
                 var parameter = new SqlParameter("@ClientId", SqlDbType.Int) { Value = id };
                 command.Parameters.Add(parameter);
-                
+
                 connection.Open();
                 var reader = command.ExecuteReader(CommandBehavior.CloseConnection);
                 while (reader.Read())
@@ -31,12 +32,18 @@ namespace LegacyApp
                     {
                         Id = int.Parse(reader["ClientId"].ToString()),
                         Name = reader["Name"].ToString(),
+                        // Предположу, что тут должно быть
+                        // ClientStatus = (ClientStatus)int.Parse(reader["ClientStatus"].ToString())
                         ClientStatus = (ClientStatus)int.Parse("ClientStatus")
                     };
                 }
             }
 
             return client;
+        }
+
+        public void Dispose()
+        {
         }
     }
 }
